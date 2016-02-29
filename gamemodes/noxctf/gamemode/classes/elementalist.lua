@@ -11,6 +11,7 @@ CLASS.Image = "noxctf/classicons/elementalist"
 CLASS.RawIcon = "spellicons/volcanicblast.png"
 
 CLASS.DefaultSpellSheet = "Volcanic Blast:Geyser:Eruption:Protect From Elements:Blink:Hydro Pump:Earthquake:Inversion:Whirlwind:Burn:Gust:Comet:Cauterize:Napalm Bomb:Aegis:Counter Spell"
+CLASS.DefaultSpellSheetA = "Scorch:Geyser:Cauterize:Armageddon:Aegis:Hydro Pump:Earthquake:Inversion:Counter Spell:Burn:Gust:Volcanic Blast:Comet:Protect From Elements:-:Napalm Bomb:Blink:Whirlwind"
 
 CLASS.EaseOfUse = 5
 CLASS.Defense = 10

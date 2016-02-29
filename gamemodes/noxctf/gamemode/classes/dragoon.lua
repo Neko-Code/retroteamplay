@@ -14,6 +14,8 @@ CLASS.RawIcon = "spellicons/dragoonflight.png"
 
 CLASS.DefaultSpellSheet = "Flamethrower:-:Fiery Talon:-:Dragoon Dash:-:Dragoon Flight:-:Inferno Blast:-:Inferno Blast:-:Dragon's Blood:-:Salamander Skin:-"
 
+CLASS.DefaultSpellSheetA = "Dragoon Dash:Fiery Talon:Dragon's Blood:Dragoon Flight:Salamander Skin:-:Dragoon Flight:Inferno Blast:Dragoon Dash"
+
 CLASS.EaseOfUse = 7
 CLASS.Defense = 6
 CLASS.Offense = 9

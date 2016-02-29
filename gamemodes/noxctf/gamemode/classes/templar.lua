@@ -14,6 +14,8 @@ CLASS.RawIcon = "spellicons/sanctuary.png"
 
 CLASS.DefaultSpellSheet = "Divine Bolt:Pixie Swarm:Heal Ring:Sanctuary:Blink:Protect From Elements:Counter Spell:Force Field:Star Burst:Inversion:Magic Arrow:Cure Poison:Levitate:Force Field:Regeneration:Channel Life"
 
+CLASS.DefaultSpellSheetA = "Magic Arrow:Sanctuary:Regeneration:Greater Heal:Channel Life:Protect From Elements:Force Field:Inversion:Counter Spell:Divine Bolt:Pixie Swarm:Heal Ring:-:-:Star Burst:Levitate:Blink:Cure Poison"
+
 CLASS.EaseOfUse = 4
 CLASS.Defense = 10
 CLASS.Offense = 5

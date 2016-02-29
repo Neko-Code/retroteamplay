@@ -105,7 +105,6 @@ function EFFECT:Init(data)
 		particle:SetRoll(math.Rand(0, 359))
 		particle:SetRollDelta(math.Rand(-1, 1))
 		particle:SetColor(170, 160, 160)
-		particle:VelocityDecay(false)
 	end
 
 	--big smoke cloud
@@ -120,7 +119,6 @@ function EFFECT:Init(data)
 		particle:SetRoll(math.Rand(0,359))
 		particle:SetRollDelta(math.Rand(-1, 1))
 		particle:SetColor(170, 170, 170)
-		particle:VelocityDecay(false)
 	end
 
 	for i=1, 6 do
@@ -133,7 +131,6 @@ function EFFECT:Init(data)
 		particle:SetRoll(math.Rand(0, 359))
 		particle:SetRollDelta(math.Rand(-1, 1))
 		particle:SetColor(170, 170, 170)
-		particle:VelocityDecay(false)
 	end
 
 	-- small smoke cloud
@@ -147,7 +144,6 @@ function EFFECT:Init(data)
 		particle:SetRoll(math.Rand(480, 540))
 		particle:SetRollDelta(math.Rand(-1, 1))
 		particle:SetColor(170, 170, 170)
-		particle:VelocityDecay(false)
 	end
 
 	emitter:Finish()

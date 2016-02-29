@@ -14,6 +14,8 @@ CLASS.RawIcon = "spellicons/protrusion.png"
 
 CLASS.DefaultSpellSheet = "Static Ball:Energy Bolt:Protrusion:Force Field:Blink:Counter Spell:Teleport to Target:Inversion:Ice Spear:Slow:Comet:Sparkler:Greater Heal:Shock:Invisibility:Anchor"
 
+CLASS.DefaultSpellSheetA = "Teleport To Target:Protrusion:Ice Spear:Lesser Heal:Shock:Anchor:Air Hike:Inversion:Counter Spell:Slow:Static Ball:Scatterfrost:Electron Ball:Sparkler:Invisibility:Protect From Elements:Blink:Force Field"
+
 CLASS.EaseOfUse = 7
 CLASS.Defense = 6
 CLASS.Offense = 7

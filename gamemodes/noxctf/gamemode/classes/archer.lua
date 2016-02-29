@@ -14,6 +14,8 @@ CLASS.RawIcon = "spellicons/archer.png"
 
 CLASS.DefaultSpellSheet = "Lightning Arrow:Grapple Arrow:Silver Arrow:-:Sprite Arrow:-:Sprite Arrow:-:Fire Arrow:Arrow Volley:Fire Arrow:-:Bouncer Arrow:-:Vampiric Arrow:-"
 
+CLASS.DefaultSpellSheetA = "Sprite Arrow:Arrow Volley:Fire Arrow:Vampiric Arrow:Bouncer Arrow:-:Lightning Arrow:Silver Arrow:Grapple Arrow"
+
 CLASS.EaseOfUse = 6
 CLASS.Defense = 7
 CLASS.Offense = 7
