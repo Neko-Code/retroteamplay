@@ -9,7 +9,7 @@ hook.Add("InitPostEntity", "GetLocal", function()
 	gamemode.Call("HookGetLocal", MySelf)
 	RunConsoleCommand("initpostentity")
 
-	
+
 
 	net.Start("PlayerUsingActionBar")
 	net.WriteBool(UsingActionBar)
@@ -71,6 +71,7 @@ SPELL_SHEETS_A = {}
 SPELL_SHEETS_A["Default"] = {}
 KeyBinds = {KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_Q, KEY_E, KEY_R, KEY_F}
 KeyLocks = {}
+KeyReleased = {}
 
 DelayIcons = {}
 
@@ -169,8 +170,8 @@ function GM:_Think()
 		self.HurtEffect = math.max(0, self.HurtEffect - FrameTime() * 0.65)
 	end
 	self.PrevHealth = health
-	
-	if UsingActionBar and not NekoChat.isTyping then
+
+	if UsingActionBar and not NekoChat.isTyping and MySelf:Alive() then
 		if input.IsKeyDown(KEY_LALT) then
 			if not KeyLocks[KEY_LALT] then
 				KeyLocks[KEY_LALT] = true
@@ -188,30 +189,41 @@ function GM:_Think()
 		end
 
 		if input.IsMouseDown(MOUSE_RIGHT) then
-			if not KeyLock[MOUSE_RIGHT] then
+			if not KeyLocks[MOUSE_RIGHT] and not MySelf:InVehicle() then
 				RunConsoleCommand("+use")
-				KeyLock[MOUSE_RIGHT] = true
+				KeyLocks[MOUSE_RIGHT] = true
 			end
 		else
-			if KeyLock[MOUSE_RIGHT] then
+			if KeyLocks[MOUSE_RIGHT] and not MySelf:InVehicle() then
 				RunConsoleCommand("-use")
-				KeyLock[MOUSE_RIGHT] = false
+				KeyLocks[MOUSE_RIGHT] = false
 			end
+		end
+
+		if input.IsKeyDown(KEY_LSHIFT) then
+			SecondRow = true
+		else
+			SecondRow = false
 		end
 
 		for _, key in pairs(KeyBinds) do
 			if input.IsKeyDown(key) then
 				if not KeyLocks[key] then
-					if 0 < MySelf:NumCastableSpells() and ActionKeyToSpell(key) ~= "-" then
+					if 0 < MySelf:NumCastableSpells() and ActionKeyToSpell(key) ~= "-" and ActionKeyToSpell(key) ~= nil and not MySelf:InVehicle() then
 						RunConsoleCommand("cast", string.lower(ActionKeyToSpell(key)))
+						ActiveSpell = NameToSpell[ ActionKeyToSpell(key) ]
 					end
 					KeyLocks[key] = true
 				end
 			else
 				KeyLocks[key] = false
+				if ActiveSpell == NameToSpell[ ActionKeyToSpell(key) ] then
+					ActiveSpell = -1
+				end
 			end
 		end
-	else
+
+else
 		if MySelf:KeyDown(IN_USE) then
 			if not KeyLocks[IN_USE] then
 				KeyLocks[IN_USE] = true
@@ -228,7 +240,7 @@ function GM:_Think()
 			end
 		end
 	end
-	
+
 end
 
 CreateClientConVar("nox_declinefriendlyteleports", 0, true, true)
@@ -1292,6 +1304,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1310,6 +1326,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1328,6 +1348,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1346,6 +1370,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1364,6 +1392,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1382,6 +1414,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1400,6 +1436,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1418,6 +1458,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1436,6 +1480,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1455,6 +1503,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1473,6 +1525,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1491,6 +1547,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1509,6 +1569,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1527,6 +1591,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1545,6 +1613,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1563,6 +1635,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1581,6 +1657,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
@@ -1599,6 +1679,10 @@ function GM:DrawActionBar(mana)
 			surface.SetDrawColor(255, 0, 0, 255)
 		elseif self.DisabledSpells[spellid] then
 			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
 		else
 			surface.SetDrawColor(255, 255, 255, 255)
 		end
