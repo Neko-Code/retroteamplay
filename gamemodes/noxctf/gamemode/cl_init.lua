@@ -188,14 +188,14 @@ function GM:_Think()
 		end
 
 		if input.IsMouseDown(MOUSE_RIGHT) then
-			if not KeyLock[MOUSE_RIGHT] then
+			if not KeyLocks[MOUSE_RIGHT] then
 				RunConsoleCommand("+use")
-				KeyLock[MOUSE_RIGHT] = true
+				KeyLocks[MOUSE_RIGHT] = true
 			end
 		else
-			if KeyLock[MOUSE_RIGHT] then
+			if KeyLocks[MOUSE_RIGHT] then
 				RunConsoleCommand("-use")
-				KeyLock[MOUSE_RIGHT] = false
+				KeyLocks[MOUSE_RIGHT] = false
 			end
 		end
 
