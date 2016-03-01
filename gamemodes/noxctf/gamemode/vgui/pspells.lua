@@ -5,7 +5,7 @@ function MakepSpells()
 		pSpells:Remove()
 		pSpells = nil
 	end
-	
+
 	local cv_A = GetConVar("nox_useactionbar")
 	local UsingActionBar = cv_A:GetBool()
 
@@ -226,7 +226,7 @@ function MakepSpells()
 		button:SetSize(32, 32)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawText("S5")
-		
+
 		dX = dX + 48
 
 		local button = vgui.Create("SpellBindingButton", Window)
@@ -235,7 +235,7 @@ function MakepSpells()
 		button:SetSize(32, 32)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawText("Q")
-		
+
 		dX = dX + 32
 
 		local button = vgui.Create("SpellBindingButton", Window)
@@ -244,7 +244,7 @@ function MakepSpells()
 		button:SetSize(32, 32)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawText("E")
-		
+
 		dX = dX + 32
 
 		local button = vgui.Create("SpellBindingButton", Window)
@@ -253,7 +253,7 @@ function MakepSpells()
 		button:SetSize(32, 32)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawText("R")
-		
+
 		dX = dX + 32
 
 		local button = vgui.Create("SpellBindingButton", Window)
@@ -344,6 +344,16 @@ function MakepSpells()
 		button:SetSize(32, 32)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawText("f")
+	end
+
+	if UsingActionBar then
+		local kbutton = vgui.Create("DButton", Window)
+		kbutton:SetSize(128, 32)
+		kbutton:Center()
+		local x,y = kbutton:GetPos()
+		kbutton:SetPos(x, dY+128)
+		kbutton:SetText("Change Key Bindings")
+		kbutton.DoClick = function() showKBMenu() end
 	end
 
 	local label = vgui.Create("DLabel", Window)
@@ -527,7 +537,7 @@ local cv_A = GetConVar("nox_useactionbar")
 function PANEL:Paint()
 	if MySelf:NumCastableSpells() == 0 then return true end
 
-        local UsingActionBar = cv_A:GetBool()
+  local UsingActionBar = cv_A:GetBool()
 	local tab = nil
 
 	if not UsingActionBar then
@@ -592,3 +602,94 @@ function PANEL:Paint()
 	return true
 end
 vgui.Register("SpellBindingSelectButton", PANEL, "Button")
+
+function showKBMenu()
+	local panel = vgui.Create("DFrame")
+	panel:SetSize(400,300)
+	panel:Center()
+	panel:SetTitle("Change Key Bindings")
+	panel.Paint = function(self, w, h)
+		draw.RoundedBox(16, 0, 0, w, h, Color(0,0,0,255))
+	end
+
+	BindingKey = true
+	panel.OnClose = function() BindingKey = false end
+
+	local x = (panel:GetWide() - 9*32 - 16)/2
+	local y = panel:GetTall()/2 - 16
+
+	local dX = x
+
+	for k,v in pairs(KeyBinds) do
+		if k == 6 then dX = dX + 16 end
+
+		local button = vgui.Create("DButton", panel)
+		button:SetSize(32,32)
+		button:SetPos(dX, y)
+		button:SetTextColor(Color(255,255,255,255))
+
+		button.Paint = function(self, w, h)
+			surface.DrawOutlinedRect(0, 0, w, h)
+
+			local letter = string.upper(input.GetKeyName(KeyBinds[k]))
+			self:SetText(letter)
+		end
+
+		button.DoClick = function()
+			RebindKey(button, k)
+		end
+
+		dX = dX + 32
+	end
+
+	local label = vgui.Create("DLabel", panel)
+	local txt = "Hold a key, then click the slot you would like that bind to that key."
+	label:SetText(txt)
+	label:SetSize(surface.GetTextSize(txt))
+	label:Center()
+	local x, _ = label:GetPos()
+	label:SetPos(x, y+64)
+
+	local label = vgui.Create("DLabel", panel)
+	txt = "You can bind to most keys and even gamepad buttons."
+	label:SetText(txt)
+	label:SetSize(surface.GetTextSize(txt))
+	label:Center()
+	local x, _ = label:GetPos()
+	label:SetPos(x, y+96)
+
+	panel:MakePopup()
+end
+
+function RebindKey(button, keypos)
+	local keys = {KEY_0, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9,
+		KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, KEY_I, KEY_J, KEY_K, KEY_L,
+		KEY_M, KEY_N, KEY_O, KEY_P, KEY_Q, KEY_R, KEY_S, KEY_T, KEY_U, KEY_V, KEY_W, KEY_X,
+		KEY_Y, KEY_Z, KEY_PAD_0, KEY_PAD_1, KEY_PAD_2, KEY_PAD_3, KEY_PAD_4, KEY_PAD_5,
+		KEY_PAD_6, KEY_PAD_7, KEY_PAD_8, KEY_PAD_9, KEY_PAD_DIVIDE, KEY_PAD_MULTIPLY,
+		KEY_PAD_MINUS, KEY_PAD_PLUS, KEY_PAD_DECIMAL, KEY_LBRACKET,
+		KEY_RBRACKET, KEY_SEMICOLON, KEY_APOSTROPHE, KEY_COMMA, KEY_PERIOD, KEY_SLASH,
+		KEY_BACKSLASH, KEY_MINUS, KEY_EQUAL, KEY_BACKSPACE, KEY_XBUTTON_A, KEY_XBUTTON_B,
+		KEY_XBUTTON_X, KEY_XBUTTON_Y, KEY_XBUTTON_LEFTSHOULDER, KEY_XBUTTON_RIGHTSHOULDER,
+		KEY_XBUTTON_BACK, KEY_XBUTTON_START, KEY_XBUTTON_STICK1, KEY_XBUTTON_STICK2,
+		KEY_XBUTTON_UP, KEY_XBUTTON_DOWN, KEY_XBUTTON_LEFT, KEY_XBUTTON_RIGHT,
+		KEY_XBUTTON_LTRIGGER, KEY_XBUTTON_RTRIGGER}
+
+	local newKey
+
+	button:SetTextColor(Color(0,255,0,255))
+
+	for k,v in pairs(keys) do
+		if input.IsKeyDown(v) then
+			newKey = v
+			break
+		end
+	end
+
+	button:SetTextColor(Color(255,255,255,255))
+
+	if newKey == nil then return end
+
+	KeyBinds[keypos] = newKey
+	SaveKeyBinds()
+end

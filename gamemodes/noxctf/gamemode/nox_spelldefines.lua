@@ -97,22 +97,6 @@ net.Receive("PlayerSelfCast", function(len, ply)
 end)
 
 function ShouldCastOther(pl)
-	--[[if not playerUsingActionBar[pl:SteamID()] then
-		if pl:KeyDown(IN_USE) then
-			return true
-		else
-			return false
-		end
-	end
-
-	if playerUsingActionBar[pl:SteamID()] then
-		if PlayerSelfCast[pl:SteamID()] then
-			return false
-		else
-			return true
-		end
-	end]]
-
 	return not PlayerSelfCast[pl:SteamID()]
 end
 

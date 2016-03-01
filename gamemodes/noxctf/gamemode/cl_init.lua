@@ -15,6 +15,8 @@ hook.Add("InitPostEntity", "GetLocal", function()
 	net.WriteBool(UsingActionBar)
 	net.SendToServer()
 
+	LoadKeyBinds()
+
 end)
 
 w, h = ScrW(), ScrH()
@@ -206,10 +208,14 @@ function GM:_Think()
 			SecondRow = false
 		end
 
+		if input.IsKeyDown(KEY_ESCAPE) or input.IsKeyDown(KEY_BACKQUOTE) then
+			ActionBarVisible = false
+		end
+
 		for _, key in pairs(KeyBinds) do
 			if input.IsKeyDown(key) then
 				if not KeyLocks[key] then
-					if 0 < MySelf:NumCastableSpells() and ActionKeyToSpell(key) ~= "-" and ActionKeyToSpell(key) ~= nil and not MySelf:InVehicle() then
+					if 0 < MySelf:NumCastableSpells() and ActionKeyToSpell(key) ~= "-" and ActionKeyToSpell(key) ~= nil and not MySelf:InVehicle() and ActionBarVisible and not BindingKey then
 						RunConsoleCommand("cast", string.lower(ActionKeyToSpell(key)))
 						ActiveSpell = NameToSpell[ ActionKeyToSpell(key) ]
 					end
@@ -1279,6 +1285,8 @@ end
 function GM:DrawActionBar(mana)
 	local class = MySelf:GetPlayerClass()
 
+	ActionBarVisible = true
+
 	local siz
 	if hud_LargeSpellIcons:GetBool() then
 		siz = ScreenScale(16)
@@ -1314,7 +1322,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
 		surface.SetTextPos(dX+4, dY)
-		surface.DrawText("S1")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[1])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1336,7 +1344,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("S2")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[2])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1358,7 +1366,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("S3")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[3])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1380,7 +1388,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("S4")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[4])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1402,7 +1410,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("S5")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[5])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1424,7 +1432,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("Q")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[6])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1446,7 +1454,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("E")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[7])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1468,7 +1476,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("R")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[8])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1490,7 +1498,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("F")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[9])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1513,7 +1521,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("1")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[1])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1535,7 +1543,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("2")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[2])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1557,7 +1565,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("3")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[3])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1579,7 +1587,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("4")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[4])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1601,7 +1609,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("5")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[5])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1623,7 +1631,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("q")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[6])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1645,7 +1653,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("e")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[7])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1667,7 +1675,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("r")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[8])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -1689,7 +1697,7 @@ function GM:DrawActionBar(mana)
 		surface.SetMaterial(Spells[spellid].Icon)
 		surface.SetTextPos(dX+4, dY)
 		surface.DrawTexturedRect(dX, dY, siz, siz)
-		surface.DrawText("f")
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[9])))
 	else
 		surface.SetDrawColor(255, 255, 255, 127)
 		surface.DrawOutlinedRect(dX, dY, siz, siz)
@@ -2042,6 +2050,19 @@ function GM:SaveSpellSheetA(class)
 	tab[18] = SPELL_SHEETS_A[class][18] or "-"
 
 	file.Write(DIRECTORY .."/noxspellshortcutsA_"..string.lower(CLASSES[class].Name)..".txt", table.concat(tab, ":"))
+end
+
+function LoadKeyBinds()
+	local filename = "noxbarkeybinds.txt"
+
+	if file.Exists(filename, "DATA") then
+		local contents = file.Read(filename, "DATA")
+		KeyBinds = string.Explode(":", contents)
+	end
+end
+
+function SaveKeyBinds()
+	file.Write("noxbarkeybinds.txt", table.concat(KeyBinds, ":"))
 end
 
 function ActionKeyToSpell(key)
