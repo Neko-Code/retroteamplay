@@ -643,7 +643,7 @@ function showKBMenu()
 	end
 
 	local label = vgui.Create("DLabel", panel)
-	local txt = "Hold a key, then click the slot you would like that bind to that key."
+	local txt = "Hold a key, then click the slot you would like to bind to that key."
 	label:SetText(txt)
 	label:SetSize(surface.GetTextSize(txt))
 	label:Center()
