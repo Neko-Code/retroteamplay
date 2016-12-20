@@ -1,3 +1,6 @@
+cvar_UsingActionBar = CreateClientConVar("nox_useactionbar", 1, true, false)
+UsingActionBar = cvar_UsingActionBar:GetBool()
+
 MySelf = MySelf or NULL
 hook.Add("InitPostEntity", "GetLocal", function()
 	MySelf = LocalPlayer()
@@ -5,6 +8,15 @@ hook.Add("InitPostEntity", "GetLocal", function()
 	GAMEMODE.HookGetLocal = GAMEMODE.HookGetLocal or (function(g) end)
 	gamemode.Call("HookGetLocal", MySelf)
 	RunConsoleCommand("initpostentity")
+
+
+
+	net.Start("PlayerUsingActionBar")
+	net.WriteBool(UsingActionBar)
+	net.SendToServer()
+
+	LoadKeyBinds()
+
 end)
 
 w, h = ScrW(), ScrH()
@@ -57,6 +69,12 @@ GM.GibModels = {
 
 SPELL_SHEETS = {}
 SPELL_SHEETS["Default"] = {}
+SPELL_SHEETS_A = {}
+SPELL_SHEETS_A["Default"] = {}
+KeyBinds = {KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_Q, KEY_E, KEY_R, KEY_F}
+KeyLocks = {}
+KeyReleased = {}
+
 DelayIcons = {}
 
 function BroadcastLua(lua)
@@ -135,6 +153,8 @@ end
 local eyetrace
 local eyetraceentity = NULL
 
+
+
 GM.EyeTraceEntity = NULL
 
 GM.PrevHealth = 0
@@ -152,6 +172,81 @@ function GM:_Think()
 		self.HurtEffect = math.max(0, self.HurtEffect - FrameTime() * 0.65)
 	end
 	self.PrevHealth = health
+
+	if UsingActionBar and (not vgui.GetKeyboardFocus()) and MySelf:Alive() then
+		if input.IsKeyDown(KEY_LALT) then
+			if not KeyLocks[KEY_LALT] then
+				KeyLocks[KEY_LALT] = true
+				net.Start("PlayerSelfCast")
+				net.WriteBool(true)
+				net.SendToServer()
+			end
+		else
+			if KeyLocks[KEY_LALT] then
+				net.Start("PlayerSelfCast")
+				net.WriteBool(false)
+				net.SendToServer()
+				KeyLocks[KEY_LALT] = false
+			end
+		end
+
+		if input.IsMouseDown(MOUSE_RIGHT) then
+			if not KeyLocks[MOUSE_RIGHT] and not MySelf:InVehicle() then
+				RunConsoleCommand("+use")
+				KeyLocks[MOUSE_RIGHT] = true
+			end
+		else
+			if KeyLocks[MOUSE_RIGHT] and not MySelf:InVehicle() then
+				RunConsoleCommand("-use")
+				KeyLocks[MOUSE_RIGHT] = false
+			end
+		end
+
+		if input.IsKeyDown(KEY_LSHIFT) then
+			SecondRow = true
+		else
+			SecondRow = false
+		end
+
+		if input.IsKeyDown(KEY_ESCAPE) or input.IsKeyDown(KEY_BACKQUOTE) then
+			ActionBarVisible = false
+		end
+
+		for _, key in pairs(KeyBinds) do
+			if input.IsKeyDown(key) then
+				if not KeyLocks[key] then
+					if 0 < MySelf:NumCastableSpells() and ActionKeyToSpell(key) ~= "-" and ActionKeyToSpell(key) ~= nil and not MySelf:InVehicle() and ActionBarVisible and not BindingKey then
+						RunConsoleCommand("cast", string.lower(ActionKeyToSpell(key)))
+						ActiveSpell = NameToSpell[ ActionKeyToSpell(key) ]
+					end
+					KeyLocks[key] = true
+				end
+			else
+				KeyLocks[key] = false
+				if ActiveSpell == NameToSpell[ ActionKeyToSpell(key) ] then
+					ActiveSpell = -1
+				end
+			end
+		end
+
+else
+		if MySelf:KeyDown(IN_USE) then
+			if not KeyLocks[IN_USE] then
+				KeyLocks[IN_USE] = true
+				net.Start("PlayerSelfCast")
+				net.WriteBool(true)
+				net.SendToServer()
+			end
+		else
+			if KeyLocks[IN_USE] then
+				KeyLocks[IN_USE] = false
+				net.Start("PlayerSelfCast")
+				net.WriteBool(false)
+				net.SendToServer()
+			end
+		end
+	end
+
 end
 
 CreateClientConVar("nox_declinefriendlyteleports", 0, true, true)
@@ -176,6 +271,10 @@ local hud_StatusBarY = CreateClientConVar("nox_hud_statusbar_y", 0.9, true, fals
 local hud_SpellMenuX = CreateClientConVar("nox_hud_spellmenu_x", 0.85, true, false)
 local hud_SpellMenuY = CreateClientConVar("nox_hud_spellmenu_y", 0.7, true, false)
 
+local hud_ActionBarX = CreateClientConVar("nox_hud_actionbar_x", 0.35, true, false)
+local hud_ActionBarY = CreateClientConVar("nox_hud_actionbar_y", 0.90, true, false)
+
+
 local hud_LargeSpellIcons = CreateClientConVar("nox_hud_largespellicons", 1, true, false)
 
 function surface.CreateLegacyFont(font, size, weight, antialias, additive, name, shadow, outline, blursize)
@@ -186,7 +285,7 @@ function GM:CreateFonts()
 	local screens = math.min(1, ((w / 3640) + 0.5) ^ 2)
 
 	surface.CreateLegacyFont("csd", BetterScreenScale() * 36, 500, true, false, "teamplaydeathnoticecs", false, true)
-	
+
 	surface.CreateLegacyFont("coolvetica", 48, 500, true, false, "ScoreboardHead")
 	surface.CreateLegacyFont("coolvetica", 24, 500, true, false, "ScoreboardSub")
 
@@ -212,10 +311,10 @@ function GM:CreateFonts()
 	surface.CreateLegacyFont("Palatino Linotype", 48 * screens, 500, true, false, "ClassSelect",true, false)
 	surface.CreateLegacyFont("Cambria", 28 * screens, 500, true, false, "ClassSelect2")
 	surface.CreateLegacyFont("Cambria", 18 * screens, 500, true, false, "ClassSelect3", true, false)
-	
+
 	surface.CreateLegacyFont("Impact", 45 * screens, 1, true, false, "NoXHealthBar", false, false)
 	surface.CreateLegacyFont("Impact", 30 * screens, 1, true, false, "NoXManaBar", false, false)
-	
+
 	-- Default, DefaultBold, DefaultSmall, etc. were changed when gmod13 hit. These are renamed fonts that have the old values.
 	surface.CreateFont("DefaultVerySmall", {font = "tahoma", size = 10, weight = 0, antialias = false})
 	surface.CreateFont("DefaultSmall", {font = "tahoma", size = 11, weight = 0, antialias = false})
@@ -247,6 +346,8 @@ function GM:RestoreHUDDefaults()
 	RunConsoleCommand("nox_hud_statusbar_y",  tonumber(hud_StatusBarY:GetDefault()))
 	RunConsoleCommand("nox_hud_spellmenu_x",  tonumber(hud_SpellMenuX:GetDefault()))
 	RunConsoleCommand("nox_hud_spellmenu_y",  tonumber(hud_SpellMenuY:GetDefault()))
+	RunConsoleCommand("nox_hud_actionbar_x",  tonumber(hud_ActionBarX:GetDefault()))
+	RunConsoleCommand("nox_hud_actionbar_y",  tonumber(hud_ActionBarY:GetDefault()))
 	RunConsoleCommand("nox_hud_largespellicons",  tonumber(hud_LargeSpellIcons:GetDefault()))
 
 	RunConsoleCommand("nox_hud_bowcharge_x", 0.5)
@@ -487,11 +588,13 @@ function GM:PlayerBindPress(pl, bind, wasin)
 		if bind == "+undo" or bind == "+zoom" then
 			RunConsoleCommand("dropflag")
 			return true
-		elseif bind == "+speed" then
+		elseif bind == "+speed" and not UsingActionBar then
 			if 0 < MySelf:NumCastableSpells() then
 				RunConsoleCommand("cast", string.lower(CURRENT_SPELL))
 			end
 
+			return true
+		elseif bind == "+walk" then
 			return true
 		end
 	end
@@ -612,9 +715,9 @@ end
 
 local OldHUDStyle = CreateClientConVar("nox_hud_oldstyle", "0", true, false)
 local mana_bar = surface.GetTextureID("noxctf/mana_bar")
-local mana_back = surface.GetTextureID("noxctf/mana_bar_back") 
+local mana_back = surface.GetTextureID("noxctf/mana_bar_back")
 local health_bar = surface.GetTextureID("noxctf/health_bar")
-local health_back = surface.GetTextureID("noxctf/health_bar_back") 
+local health_back = surface.GetTextureID("noxctf/health_bar_back")
 local background = surface.GetTextureID("noxctf/bar_background")
 local colHealth = table.Copy(COLOR_HEALTH)
 
@@ -655,7 +758,7 @@ function GM:DrawMana(x, y, mana, maxmana)
 	surface.SetDrawColor(255, 255, 255, 255)
 	surface.SetTexture(mana_back)
 	surface.DrawTexturedRect(curX, curY - imagesizey, imagesizex, imagesizey)
-		
+
 	surface.SetTexture(mana_bar)
 	--Ugly numbers
 	surface.DrawTexturedRectUV(curX+(imagesizex/8), curY - imagesizey, curX+(imagesizex/1.45868945869)*(mana/maxmana), imagesizey, 0.125, 0, 0.125+ 0.685546875*(mana/maxmana), 1)
@@ -729,10 +832,14 @@ function GM:DrawHUD(curtime)
 				self:DrawMana(0,0, math.max(0, MySelf:GetMana()), classtab.Mana )
 			end
 		end
-
+	UsingActionBar = cvar_UsingActionBar:GetBool()
 		if MySelf:NumCastableSpells() then
 			if 0 < MySelf:NumCastableSpells() then
-				self:DrawSpellSelection(mana)
+				if not UsingActionBar then
+					self:DrawSpellSelection(mana)
+				else
+					self:DrawActionBar(mana)
+				end
 			end
 		end
 	end
@@ -758,7 +865,7 @@ function GM:DrawHUD(curtime)
 		--dX = dX + 2
 		dX = dX + siz * 1.25
 	end
-	
+
 	for spellid, tab in pairs(DelayIcons) do
 		local endtime = tab.EndTime
 		local starttime = tab.StartTime
@@ -1175,6 +1282,428 @@ function GM:DrawSpellSelection(mana)
 	end
 end
 
+function GM:DrawActionBar(mana)
+	local class = MySelf:GetPlayerClass()
+
+	ActionBarVisible = true
+
+	local siz
+	if hud_LargeSpellIcons:GetBool() then
+		siz = ScreenScale(16)
+	else
+		siz = ScreenScale(10.6666667)
+	end
+
+	--local dX = w - siz * 6
+	--local dY = h - siz * 6
+	local dX = w * hud_ActionBarX:GetFloat()
+	local dY = h * hud_ActionBarY:GetFloat()
+	local x = dX
+	local y = dY
+
+	local sheet = SPELL_SHEETS_A[class]
+	if not sheet then return end
+
+	surface.SetFont("Default")
+
+	local spellid = NameToSpell[ sheet[10] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[1])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[11] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[2])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[12] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[3])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[13] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[4])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[14] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[5])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz*1.5
+	spellid = NameToSpell[ sheet[15] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[6])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[16] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[7])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[17] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[8])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[18] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif not SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[9])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = x
+	dY = y + siz
+	spellid = NameToSpell[ sheet[1] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[1])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[2] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[2])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[3] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[3])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[4] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[4])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[5] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[5])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz*1.5
+	spellid = NameToSpell[ sheet[6] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[6])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[7] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[7])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[8] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[8])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+	dX = dX + siz
+	spellid = NameToSpell[ sheet[9] ]
+	if spellid then
+		if Spells[spellid].Mana and mana < Spells[spellid].Mana then
+			surface.SetDrawColor(255, 0, 0, 255)
+		elseif self.DisabledSpells[spellid] then
+			surface.SetDrawColor(100, 100, 100, 255)
+		elseif ActiveSpell == spellid then
+			surface.SetDrawColor(80, 255, 100, 255)
+		elseif SecondRow then
+			surface.SetDrawColor(150, 150, 150, 255)
+		else
+			surface.SetDrawColor(255, 255, 255, 255)
+		end
+		surface.SetMaterial(Spells[spellid].Icon)
+		surface.SetTextPos(dX+4, dY)
+		surface.DrawTexturedRect(dX, dY, siz, siz)
+		surface.DrawText(string.upper(input.GetKeyName(KeyBinds[9])))
+	else
+		surface.SetDrawColor(255, 255, 255, 127)
+		surface.DrawOutlinedRect(dX, dY, siz, siz)
+	end
+end
+
 function GM:SelectSpellsFromPage1()
 	local class = MySelf:GetPlayerClass()
 	if MySelf:KeyDown(IN_MOVELEFT) and MySelf:KeyDown(IN_FORWARD) then
@@ -1351,7 +1880,10 @@ end)
 
 function GM:LocalPlayerSpawn(classid)
 	DelayIcons = {}
+	UsingActionBar = cvar_UsingActionBar:GetBool()
 	self:LoadSpellSheet(classid)
+	self:LoadSpellSheetA(classid)
+
 	local viewmod = MySelf:GetViewModel()
 	if viewmod:IsValid() then
 		viewmod:SetColor(Color(255, 255, 255, 255))
@@ -1369,9 +1901,9 @@ function GM:LoadSpellSheet(classid)
 
 	local tab = {}
 	local filename = "noxspellshortcuts_"..string.lower(classtab.Name)..".txt"
-	
+
 	file.CreateDir(DIRECTORY)
-	
+
 	if file.Exists(DIRECTORY .."/".. filename, "DATA") then
 		local contents = file.Read(DIRECTORY .."/".. filename, "DATA")
 		if classtab.DefaultSpellSheet and #string.gsub(string.gsub(contents, ":", ""), "-", "") <= 0 then
@@ -1441,6 +1973,109 @@ function GM:SaveSpellSheet(class)
 	tab[16] = SPELL_SHEETS[class][IN_BACK + IN_MOVERIGHT][2] or "-"
 
 	file.Write(DIRECTORY .."/noxspellshortcuts_"..string.lower(CLASSES[class].Name)..".txt", table.concat(tab, ":"))
+end
+
+function GM:LoadSpellSheetA(classid)
+	classid = classid or MySelf:GetPlayerClass()
+	local classtab = CLASSES[classid]
+	if not classtab or classtab.Group == "Hidden" then return end
+
+	local tab = {}
+	local filename = "noxspellshortcutsA_"..string.lower(classtab.Name)..".txt"
+
+	file.CreateDir(DIRECTORY)
+
+	if file.Exists(DIRECTORY .."/".. filename, "DATA") then
+		local contents = file.Read(DIRECTORY .."/".. filename, "DATA")
+		if classtab.DefaultSpellSheet and #string.gsub(string.gsub(contents, ":", ""), "-", "") <= 0 then
+			tab = string.Explode(":", classtab.DefaultSpellSheet)
+		else
+			tab = string.Explode(":", contents)
+		end
+	elseif classtab.DefaultSpellSheetA then
+		tab = string.Explode(":", classtab.DefaultSpellSheetA)
+	end
+
+	for k, v in ipairs(tab) do
+		if not v or #v == 0 then
+			tab[k] = "-"
+		end
+	end
+
+	SPELL_SHEETS_A[classid] = {}
+	SPELL_SHEETS_A[classid][1] = tab[1]
+	SPELL_SHEETS_A[classid][2] = tab[2]
+	SPELL_SHEETS_A[classid][3] = tab[3]
+	SPELL_SHEETS_A[classid][4] = tab[4]
+	SPELL_SHEETS_A[classid][5] = tab[5]
+	SPELL_SHEETS_A[classid][6] = tab[6]
+	SPELL_SHEETS_A[classid][7] = tab[7]
+	SPELL_SHEETS_A[classid][8] = tab[8]
+	SPELL_SHEETS_A[classid][9] = tab[9]
+	SPELL_SHEETS_A[classid][10] = tab[10]
+	SPELL_SHEETS_A[classid][11] = tab[11]
+	SPELL_SHEETS_A[classid][12] = tab[12]
+	SPELL_SHEETS_A[classid][13] = tab[13]
+	SPELL_SHEETS_A[classid][14] = tab[14]
+	SPELL_SHEETS_A[classid][15] = tab[15]
+	SPELL_SHEETS_A[classid][16] = tab[16]
+	SPELL_SHEETS_A[classid][17] = tab[17]
+	SPELL_SHEETS_A[classid][18] = tab[18]
+	if not file.Exists(DIRECTORY .."/noxspellshortcutsA_"..string.lower(CLASSES[classid].Name)..".txt", "DATA") then
+		file.Write(DIRECTORY .."/noxspellshortcutsA_"..string.lower(CLASSES[classid].Name)..".txt", table.concat(tab, ":"))
+	end
+end
+
+function GM:SaveSpellSheetA(class)
+	if not SPELL_SHEETS_A[class] then return end
+
+	local tab = {}
+	tab[1] = SPELL_SHEETS_A[class][1] or "-"
+	tab[2] = SPELL_SHEETS_A[class][2] or "-"
+	tab[3] = SPELL_SHEETS_A[class][3] or "-"
+	tab[4] = SPELL_SHEETS_A[class][4] or "-"
+	tab[5] = SPELL_SHEETS_A[class][5] or "-"
+	tab[6] = SPELL_SHEETS_A[class][6] or "-"
+	tab[7] = SPELL_SHEETS_A[class][7] or "-"
+	tab[8] = SPELL_SHEETS_A[class][8] or "-"
+	tab[9] = SPELL_SHEETS_A[class][9] or "-"
+	tab[10] = SPELL_SHEETS_A[class][10] or "-"
+	tab[11] = SPELL_SHEETS_A[class][11] or "-"
+	tab[12] = SPELL_SHEETS_A[class][12] or "-"
+	tab[13] = SPELL_SHEETS_A[class][13] or "-"
+	tab[14] = SPELL_SHEETS_A[class][14] or "-"
+	tab[15] = SPELL_SHEETS_A[class][15] or "-"
+	tab[16] = SPELL_SHEETS_A[class][16] or "-"
+	tab[17] = SPELL_SHEETS_A[class][17] or "-"
+	tab[18] = SPELL_SHEETS_A[class][18] or "-"
+
+	file.Write(DIRECTORY .."/noxspellshortcutsA_"..string.lower(CLASSES[class].Name)..".txt", table.concat(tab, ":"))
+end
+
+function LoadKeyBinds()
+	local filename = "noxbarkeybinds.txt"
+
+	if file.Exists(filename, "DATA") then
+		local contents = file.Read(filename, "DATA")
+		KeyBinds = string.Explode(":", contents)
+	end
+end
+
+function SaveKeyBinds()
+	file.Write("noxbarkeybinds.txt", table.concat(KeyBinds, ":"))
+end
+
+function ActionKeyToSpell(key)
+	local class = MySelf:GetPlayerClass()
+	for k,v in pairs(KeyBinds) do
+		if v == key then
+			if input.IsKeyDown(KEY_LSHIFT) then
+				return SPELL_SHEETS_A[class][k+#KeyBinds]
+			else
+				return SPELL_SHEETS_A[class][k]
+			end
+		end
+	end
 end
 
 usermessage.Hook("FCap", function(um)

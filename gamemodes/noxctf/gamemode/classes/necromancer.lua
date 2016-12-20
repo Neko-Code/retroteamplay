@@ -13,6 +13,8 @@ CLASS.RawIcon = "spellicons/fear.png"
 
 CLASS.DefaultSpellSheet = "Arcane Explosion:Anchor:Blood Well:Raise Undead:Counter Spell:Slow:Hex:Protect From Poison:Poison:Swap Location:Blink:Infravision:Soul Explosion:Burn:Power Well:Blood Boil"
 
+CLASS.DefaultSpellSheetA = "Swap Location:Hex:Soul Explosion:Blood Well:Arcane Explosion:Mana Sickness:Toxic Cloud:Inversion:Counter Spell:Slow:Burn:Cursed Skulls:Power Well:Infravision:Flesh Wound:Poison:Blink:Anchor"
+
 CLASS.EaseOfUse = 4
 CLASS.Defense = 8
 CLASS.Offense = 6

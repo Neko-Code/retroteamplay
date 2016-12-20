@@ -14,6 +14,9 @@ CLASS.Image = "noxctf/classicons/warrior"
 CLASS.RawIcon = "spellicons/berserkercharge.png"
 
 CLASS.DefaultSpellSheet = "Berserker Charge:-:Eye of the Wolf:Brute:Harpoon:-:War Cry:-:Leap:-:Leap:-:-:-:-:-"
+
+CLASS.DefaultSpellSheetA = "Brute:War Cry:Leap:Eye of the Wolf:-:-:-:Berserker Charge:Harpoon"
+
 CLASS.NoStun = true
 
 CLASS.EaseOfUse = 7

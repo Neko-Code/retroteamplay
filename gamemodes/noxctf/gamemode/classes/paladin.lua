@@ -13,6 +13,9 @@ CLASS.Image = "noxctf/classicons/paladin"
 CLASS.RawIcon = "spellicons/oversoul.png"
 
 CLASS.DefaultSpellSheet = "Sanctify:-:Repel:-:Holy Nova:-:Smite:-:-:-:-:-:Oversoul:-:Sacred Vow:-"
+
+CLASS.DefaultSpellSheetA = "Sanctify:Smite:Holy Nova:Oversoul:-:-:-:Repel:Sacred Vow"
+
 --CLASS.CantPilot = true
 CLASS.NoStun = true
 --CLASS.Hidden = true

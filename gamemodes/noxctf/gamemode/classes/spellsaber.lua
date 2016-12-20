@@ -14,6 +14,8 @@ CLASS.RawIcon = "spellicons/spellsaber.png"
 
 CLASS.DefaultSpellSheet = "Sanguine Blade:Force Field:Sword Throw:Blade Spirits:Null Blade:-:Corrupted Blade:-:Storm Blade:-:Flame Blade:-:Frost Blade:-:Shockwave Blade:-"
 
+CLASS.DefaultSpellSheetA = "Sword Throw:Frost Blade:Corrupted Blade:Sanguine Blade:Shockwave Blade:-:Blade Spirits:Null Blade:Force Field"
+
 CLASS.EaseOfUse = 5
 CLASS.Defense = 3
 CLASS.Offense = 7

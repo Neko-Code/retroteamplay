@@ -9,7 +9,7 @@ local function ForwardSpell(func, pl, spellid)
 			pl:SendLua("insma()")
 			return
 		end
-		
+
 		if func and not func(pl) then
 			if spell.Hostile then
 				pl:RemoveInvisibility()
@@ -33,7 +33,7 @@ local function Cast(sender, command, arguments)
 		sender:LMR(54)
 		return
 	end
-		
+
 	if not spellid then
 		sender:LMR(23)
 		return
@@ -78,6 +78,28 @@ local function Cast(sender, command, arguments)
 		sender.NextSpell = CurTime() + spelltab.Delay + 0.01
 	end
 end
+
+playerUsingActionBar = {}
+
+util.AddNetworkString("PlayerUsingActionBar")
+
+net.Receive("PlayerUsingActionBar", function(len, ply)
+	local b = net.ReadBool()
+	playerUsingActionBar[ply:SteamID()] = b
+end)
+
+PlayerSelfCast = {}
+
+util.AddNetworkString("PlayerSelfCast")
+
+net.Receive("PlayerSelfCast", function(len, ply)
+	PlayerSelfCast[ply:SteamID()] = net.ReadBool()
+end)
+
+function ShouldCastOther(pl)
+	return not PlayerSelfCast[pl:SteamID()]
+end
+
 concommand.Add("cast", Cast)
 
 function spells.FireBolt(pl)
@@ -178,7 +200,7 @@ function spells.Typhoon(pl)
 		pl:LMR(53)
 		return true
 	end
-	
+
 	pl:GiveStatus("typhoon", 5)
 end
 
@@ -328,7 +350,7 @@ local function CreateProtrusionSpike(pl, pos, teamid)
 		ent:SetTeamID(teamid)
 		ent:Spawn()
 	end
-	
+
 	local _filter = player.GetAll()
 	table.Add(_filter, ents.FindByClass("projectile_protrusionspike"))
 	local tr2 = util.TraceLine({start = pos, endpos = pos + Vector(0, 0, 1000), filter=_filter, mask = MASK_SOLID})
@@ -339,7 +361,7 @@ local function CreateProtrusionSpike(pl, pos, teamid)
 			ent2:SetPos(tr.HitPos + Vector(0,0,-48))
 			ent2:Spawn()
 			for _, pl in pairs(ents.FindInSphere(tr.HitPos,40)) do
-				if pl:IsPlayer() then 
+				if pl:IsPlayer() then
 					ent2:Remove()
 				end
 			end
@@ -474,7 +496,7 @@ function GenericHoming(pl, effect, friendly)
 end
 
 function spells.LesserHeal(pl, override, owner)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "LesserHeal", true)
 		return
 	end
@@ -504,7 +526,7 @@ end
 function spells.GreaterHeal(pl)
 	pl:StopIfOnGround()
 
-	if pl:KeyDown(IN_USE) then
+	if ShouldCastOther(pl) then
 		local hit = NULL
 		local tr = pl:TraceLine(200)
 		local trent = tr.Entity
@@ -717,7 +739,7 @@ local function Regeneration(pl, owner, uid)
 end
 
 function spells.Regeneration(pl, override, owner)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "Regeneration", true)
 		return
 	end
@@ -763,7 +785,7 @@ function spells.Shock(pl, override)
 end
 
 function spells.ProtectFromElements(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "ProtectFromElements", true)
 		return
 	end
@@ -775,7 +797,7 @@ function spells.ProtectFromElements(pl, override)
 end
 
 function spells.ProtectFromFire(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "ProtectFromFire", true)
 		return
 	end
@@ -786,7 +808,7 @@ function spells.ProtectFromFire(pl, override)
 end
 
 function spells.ProtectFromCold(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "ProtectFromCold", true)
 		return
 	end
@@ -797,7 +819,7 @@ function spells.ProtectFromCold(pl, override)
 end
 
 function spells.ProtectFromShock(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "ProtectFromShock", true)
 		return
 	end
@@ -808,7 +830,7 @@ function spells.ProtectFromShock(pl, override)
 end
 
 function spells.ProtectFromPoison(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "ProtectFromPoison", true)
 		return
 	end
@@ -817,7 +839,7 @@ function spells.ProtectFromPoison(pl, override)
 end
 
 function spells.Vampirism(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "Vampirism", true)
 		return
 	end
@@ -826,11 +848,10 @@ function spells.Vampirism(pl, override)
 end
 
 function spells.Haste(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "Haste", true)
 		return
 	end
-
 	pl:GiveStatus("haste", 25)
 end
 
@@ -853,7 +874,7 @@ function spells.Hex(pl)
 end
 
 function spells.BloodBoil(pl)
-	if pl:KeyDown(IN_USE) then
+	if ShouldCastOther(pl) then
 		GenericHoming(pl, "BloodBoil", true)
 		return
 	end
@@ -873,7 +894,7 @@ function spells.Tag(pl)
 end
 
 function spells.CurePoison(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "CurePoison", true)
 		return
 	end
@@ -887,7 +908,7 @@ end
 
 function spells.Evade(pl)
 	if not pl:OnGround() or pl:IsAnchored() then return true end
-	
+
 	if pl:IsCarrying() then
 		pl:LM(30)
 		return true
@@ -926,7 +947,7 @@ function spells.Evade(pl)
 end
 
 function spells.ForceField(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "ForceField", true)
 		return
 	end
@@ -1078,7 +1099,7 @@ function spells.EyeOfTheWolf(pl)
 end
 
 function spells.Infravision(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "Infravision", true)
 		return
 	end
@@ -1116,11 +1137,19 @@ function CreateTeleportCloud(pos1, pos2, pl)
 end
 
 function spells.Anchor(pl)
-	if pl:KeyDown(IN_USE) then
+	if not playerUsingActionBar[pl:SteamID()] then
+		if ShouldCastOther(pl) then
+			GenericHit.Anchor(pl)
+			return
+		end
+		GenericHoming(pl, "Anchor")
+	else
+		if ShouldCastOther(pl) then
+			GenericHoming(pl, "Anchor")
+			return
+		end
 		GenericHit.Anchor(pl)
-		return
 	end
-	GenericHoming(pl, "Anchor")
 end
 
 function spells.SwapLocation(pl)
@@ -1333,7 +1362,7 @@ function spells.VenomBlade(pl)
 end
 
 function spells.Invisibility(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "Invisibility", true)
 		return
 	end
@@ -1478,14 +1507,14 @@ function spells.TeleportToTarget(pl)
 
 	local _start = pl:GetShootPos()
 	local range = 275
-	
+
 	-- this is a check to see if the player would cross a repel wall. since it's not solid, traces do not hit it.
 	local dir = pl:GetAimVector()
 	local numSpheres = 5
 	local delta = range / numSpheres
 	local rad = delta/2
 	local pos = _start + dir * rad
-	
+
 	for i = 1, numSpheres do
 		local spherePos = pos + dir * delta * (i - 1)
 		--debugoverlay.Sphere(spherePos, rad, 5, COLOR_RED)
@@ -1496,9 +1525,9 @@ function spells.TeleportToTarget(pl)
 			end
 		end
 	end
-	
+
 	local tr = util.TraceLine({start = _start, endpos = _start + dir * range, filter=pl, mask=MASK_PLAYERSOLID})
-	
+
 	return DoTeleportToTarget(pl, tr)
 end
 
@@ -1564,7 +1593,7 @@ function spells.TeleportToMarker(pl)
 		pl:LMR(55)
 		return true
 	end
-	
+
 	if pl:IsCarrying() then
 		pl:LM(30)
 		return true
@@ -1739,7 +1768,7 @@ function spells.Comet(pl)
 	end
 
 	pl:CustomGesture(ACT_SIGNAL_HALT)]]
-	
+
 	if pl:IsIndoors(true) then
 		pl:LMR(63)
 		return true
@@ -1947,7 +1976,7 @@ end
 util.PrecacheSound("weapons/physcannon/physcannon_charge.wav")
 function spells.Sanctuary(pl)
 	if pl.ActiveSanc then pl:LMR(36) return true end
-	
+
 	local pos = pl:GetPos() + Vector(0, 0, 4)
 	local teamid = pl:Team()
 	timer.Create("sanct"..pl:UniqueID()..CurTime(), 0.1, 40, function() SanctuaryTimer(pos, pl, teamid) end)
@@ -1989,7 +2018,7 @@ GenericHit = {}
 
 function GenericHit.Anchor(pl, proj)
 	local status = pl:GiveStatus("anchor", 10)
-	
+
 	if proj then
 		status.Hostile = true
 	end
@@ -2227,7 +2256,7 @@ function spells.Meltdown(pl)
 		pl:LMR(63)
 		return true
 	end
-	
+
 	pl:GiveStatus("channelingmeltdown", 4)
 end
 
@@ -2258,7 +2287,7 @@ function spells.Earthquake(pl)
 		pl:LMR(64)
 		return true
 	end
-	
+
 	pl:GiveStatus("channelingearthquake", 5)
 end
 
@@ -2292,7 +2321,7 @@ function spells.Whirlwind(pl)
 end
 
 function spells.Aegis(pl)
-	if pl:KeyDown(IN_USE) then
+	if ShouldCastOther(pl) then
 		GenericHoming(pl, "Aegis", true)
 		return
 	end
@@ -2335,17 +2364,17 @@ end
 function spells.Sanctify(pl)
 	pl:StopAllLuaAnimations()
 	pl:ResetLuaAnimation("PAL_GESTURE_1")
-	
+
 	timer.Simple(.75, function()
 		if pl:IsValid() and pl:Alive() then
 			pl:EmitSound("nox/healringbegin.ogg", 100, 200)
-	
+
 			local effectdata = EffectData()
 				effectdata:SetOrigin(pl:GetCenter())
 			util.Effect("sanctify", effectdata)
 		end
 	end)
-	
+
 	timer.Simple(1, function()
 		if pl:IsValid() and pl:Alive() then
 			local pos = pl:GetCenter()
@@ -2358,7 +2387,7 @@ function spells.Sanctify(pl)
 			end
 		end
 	end)
-	
+
 	pl:GlobalCooldown(2)
 	pl:GiveStatus("pacifism", 2)
 end
@@ -2370,20 +2399,20 @@ end
 function spells.Repel(pl)
 	pl:StopAllLuaAnimations()
 	pl:ResetLuaAnimation("PAL_GESTURE_1")
-	
+
 	timer.Simple(1, function()
 		if pl:IsValid() and pl:Alive() then
 			local dir = pl:GetForward()
 			dir.z = 0
 			local pos = pl:GetPos() + Vector(0, 0, 50) + dir * 50
-		
+
 			local tr = util.TraceLine({start=pos, endpos=pos + Vector(0, 0, -100), mask = MASK_SOLID_BRUSHONLY})
 			if tr.HitWorld then
 			pos = tr.HitPos + tr.HitNormal * 50
 			else
 				pos = pos
 			end
-	
+
 			local ent = ents.Create("repelwall")
 			if ent:IsValid() then
 				ent:SetOwner(pl)
@@ -2395,30 +2424,30 @@ function spells.Repel(pl)
 			end
 		end
 	end)
-	
-	pl:GlobalCooldown(2) 
+
+	pl:GlobalCooldown(2)
 	pl:GiveStatus("pacifism", 2)
 end
 
 function spells.SacredVow(pl)
 	pl:StopAllLuaAnimations()
 	pl:ResetLuaAnimation("PAL_GESTURE_1")
-	
+
 	local effectdata = EffectData()
 		effectdata:SetOrigin(pl:GetCenter())
 		effectdata:SetEntity(pl)
 	util.Effect("sacredvow", effectdata)
-	
-	
+
+
 	timer.Simple(.75, function()
 		if pl:IsValid() and pl:Alive() then
 			local eyepos = pl:EyePos()
 			local myteam = pl:Team()
-	
+
 			for _, ent in pairs(ents.FindInSphere(eyepos + pl:GetAimVector() * 24, 40)) do
 				if ent:IsValid() and ent:IsPlayer() and ent ~= pl and ent:GetTeamID() == myteam then
 					GAMEMODE:PlayerHeal(ent, pl, 15)
-				
+
 					if not ent:GetStatus("sacredvow") then
 						local status = ent:GiveStatus("sacredvow")
 						status:SetCaster(pl)
@@ -2427,7 +2456,7 @@ function spells.SacredVow(pl)
 			end
 		end
 	end)
-	
+
 	pl:GlobalCooldown(2)
 	pl:GiveStatus("pacifism", 2)
 end
@@ -2435,7 +2464,7 @@ end
 function spells.HolyNova(pl)
 	pl:StopAllLuaAnimations()
 	pl:ResetLuaAnimation("PAL_GESTURE_2")
-	
+
 	local ent = ents.Create("holynova")
 	if ent:IsValid() then
 		ent:SetOwner(pl)
@@ -2444,7 +2473,7 @@ function spells.HolyNova(pl)
 		ent:SetPos(pl:GetPos())
 		ent:Spawn()
 	end
-	
+
 	pl:GlobalCooldown(1.75)
 	pl:GiveStatus("pacifism", 1.75)
 end
@@ -2452,23 +2481,23 @@ end
 function spells.Smite(pl)
 	pl:StopAllLuaAnimations()
 	pl:ResetLuaAnimation("PAL_GESTURE_3")
-	
+
 	timer.Simple(.4, function()
 		pl:EmitSound("npc/zombie/claw_miss1.wav", 80, math.Rand(60, 70))
 	end)
-	
+
 	timer.Simple(.6, function()
 		if pl:IsOnGround() then
 			local pos1 = pl:GetCenter() + pl:GetForward() * 40
 			local pos2 = pl:GetCenter() + pl:GetForward() * 40 - Vector(0, 0, 75)
 			local tr = util.TraceLine({start=pos1, endpos=pos2, mask = MASK_SOLID_BRUSHONLY})
-			
+
 			pl:EmitSound("nox/earthquake.ogg")
 			util.ScreenShake(tr.HitPos, 15, 5, 0.75, 500)
 			local effectdata = EffectData()
 				effectdata:SetOrigin(tr.HitPos)
 			util.Effect("dust", effectdata)
-			
+
 			local ent = ents.Create("projectile_shockwave")
 			if ent:IsValid() then
 				ent:SetOwner(pl)
@@ -2485,13 +2514,13 @@ function spells.Smite(pl)
 			return true
 		end
 	end)
-	
+
 	pl:GlobalCooldown(1.5)
 	pl:GiveStatus("pacifism", 1.5)
 end
 
 function spells.Astra(pl, override)
-	if pl:KeyDown(IN_USE) and not override then
+	if ShouldCastOther(pl) and not override then
 		GenericHoming(pl, "Astra", true)
 		return
 	end
@@ -2570,7 +2599,7 @@ end
 function spells.SanguineBlade(pl)
 	if pl:GetMana() < 25 then
 		pl:LMR(21)
-		return true 
+		return true
 	end
 	if pl:GetStatus("spellsaber_sanguineblade") then
 		pl:RemoveStatus("spellsaber*", false, true)
@@ -2586,7 +2615,7 @@ end
 function spells.StormBlade(pl)
 	if pl:GetMana() < 20 then
 		pl:LMR(21)
-		return true 
+		return true
 	end
 	if pl:GetStatus("spellsaber_stormblade") then
 		pl:RemoveStatus("spellsaber*", false, true)
@@ -2602,7 +2631,7 @@ end
 function spells.FlameBlade(pl)
 	if pl:GetMana() < 15 then
 		pl:LMR(21)
-		return true 
+		return true
 	end
 	if pl:GetStatus("spellsaber_flameblade") then
 		pl:RemoveStatus("spellsaber*", false, true)
@@ -2618,7 +2647,7 @@ end
 function spells.NullBlade(pl)
 	if pl:GetMana() < 20 then
 		pl:LMR(21)
-		return true 
+		return true
 	end
 	if pl:GetStatus("spellsaber_nullblade") then
 		pl:RemoveStatus("spellsaber*", false, true)
@@ -2634,7 +2663,7 @@ end
 function spells.CorruptedBlade(pl)
 	if pl:GetMana() < 30 then
 		pl:LMR(21)
-		return true 
+		return true
 	end
 	if pl:GetStatus("spellsaber_corruptblade") then
 		pl:RemoveStatus("spellsaber*", false, true)
@@ -2650,7 +2679,7 @@ end
 function spells.ShockwaveBlade(pl)
 	if pl:GetMana() < 15 then
 		pl:LMR(21)
-		return true 
+		return true
 	end
 	if pl:GetStatus("spellsaber_shockblade") then
 		pl:RemoveStatus("spellsaber*", false, true)
@@ -2666,7 +2695,7 @@ end
 function spells.FrostBlade(pl)
 	if pl:GetMana() < 4 then
 		pl:LMR(21)
-		return true 
+		return true
 	end
 	if pl:GetStatus("spellsaber_frostblade") then
 		pl:RemoveStatus("spellsaber*", false, true)
@@ -2681,10 +2710,10 @@ end
 
 function spells.SwordThrow(pl)
 	for _, ent in pairs(ents.FindByClass("projectile_swordthrow")) do
-	
+
 		if pl:IsCarrying() then pl:LMR(30) return true end
 		if not pl:CanTeleport() then pl:LMR(55) return true end
-		
+
 		if ent.OriginalOwner == pl then
 			if ent:GetOwner() == pl then
 				pl:GiveStatus("swordwarp")
@@ -2738,21 +2767,21 @@ function spells.FleshWound(pl)
 	local soul = pl:FindNearbySoul()
 
 	if !IsValid(soul) then pl:LMR(86) return true end
-		
+
 	local pos = soul:GetPos()
-	
+
 	local effectdata = EffectData()
 		effectdata:SetOrigin( pos )
 		effectdata:SetEntity( soul:GetOwner() or pl )
 	util.Effect("soulexplosion", effectdata)
-	
+
 	soul:Remove()
-		
+
 	local e = EffectData()
 		e:SetOrigin( pos )
 		e:SetEntity( pl )
 	util.Effect( "fleshwoundspawn", e)
-		
+
 
 	for _, ent in ipairs(ents.FindInSphere(pos, 350)) do
 		if ent:IsPlayer() and ent:Alive() and TrueVisible(ent:NearestPoint(pos), pos) then
@@ -2765,37 +2794,37 @@ end
 
 function spells.ArcaneExplosion(pl, override)
 	local mypos = pl:LocalToWorld(pl:OBBCenter())
-	ExplosiveDamage(pl, mypos, 125, 125, 1, 0.3, 1, _G.DUMMY_ARCANEEXPLOSION, DMGTYPE_FIRE, true)	
+	ExplosiveDamage(pl, mypos, 125, 125, 1, 0.3, 1, _G.DUMMY_ARCANEEXPLOSION, DMGTYPE_FIRE, true)
 
 	local effectdata = EffectData()
 		effectdata:SetOrigin(pl:GetPos() + vector_up*4)
 		effectdata:SetNormal(vector_up)
 	util.Effect("necroexplosion", effectdata)
-	
+
 	pl:CustomGesture(ACT_SIGNAL_HALT)
 end
 
 function spells.SoulExplosion(pl, override)
 
 	local soul = pl:FindNearbySoul( 420 )
-		
+
 	if !IsValid(soul) then pl:LMR(86) return true end
-		
+
 	local pos = soul:GetPos()
-	
+
 	local effectdata = EffectData()
 		effectdata:SetOrigin(pos)
 		effectdata:SetEntity(soul:GetOwner() or pl)
 	util.Effect("soulexplosion", effectdata)
-		
+
 	soul:Remove()
-		
+
 	ExplosiveDamage(pl, pos, 170, 170, 1, 0.66, 2, _G.DUMMY_SOULEXPLOSION, DMGTYPE_FIRE)
 	local effectdata = EffectData()
 		effectdata:SetOrigin(pos)
 		effectdata:SetNormal(vector_up)
 	util.Effect("rovercannonexplosion", effectdata)
-	
+
 	pl:CustomGesture(ACT_SIGNAL_FORWARD)
 
 end
@@ -2812,20 +2841,20 @@ end
 
 function spells.BloodWell(pl)
 	if pl.ActiveBloodWell then pl:LMR(36) return true end
-	
+
 	local soul = pl:FindNearbySoul()
 
 	if !IsValid(soul) then pl:LMR(86) return true end
-		
+
 	local pos = soul:GetPos()
-	
+
 	local effectdata = EffectData()
 		effectdata:SetOrigin(pos)
 		effectdata:SetEntity(soul:GetOwner() or pl)
 	util.Effect("soulexplosion", effectdata)
-	
+
 	soul:Remove()
-	
+
 	local teamid = pl:Team()
 	timer.Create("bloodwell"..pl:UniqueID()..CurTime(), 0.1, 50, function() BloodWellTimer(pos, pl, teamid) end)
 	pl.ActiveBloodWell = true
@@ -2836,7 +2865,7 @@ function spells.BloodWell(pl)
 		effectdata:SetEntity(pl)
 		effectdata:SetMagnitude(5)
 	util.Effect("bloodwell", effectdata)
-	
+
 	pl:CustomGesture(ACT_SIGNAL_HALT)
 end
 
@@ -2853,20 +2882,20 @@ end
 
 function spells.PowerWell(pl)
 	if pl.ActivePowerWell then pl:LMR(36) return true end
-	
+
 	local soul = pl:FindNearbySoul()
-	
+
 	if !IsValid(soul) then pl:LMR(86) return true end
-		
+
 	local pos = soul:GetPos()
-	
+
 	local effectdata = EffectData()
 		effectdata:SetOrigin(pos)
 		effectdata:SetEntity(soul:GetOwner() or pl)
-	util.Effect("soulexplosion", effectdata)	
-		
+	util.Effect("soulexplosion", effectdata)
+
 	soul:Remove()
-	
+
 	local teamid = pl:Team()
 	timer.Create("bloodwell"..pl:UniqueID()..CurTime(), 0.1, 60, function() PowerWellTimer(pos, pl, teamid) end)
 	pl.ActivePowerWell = true
@@ -2877,7 +2906,7 @@ function spells.PowerWell(pl)
 		effectdata:SetEntity(pl)
 		effectdata:SetMagnitude(6)
 	util.Effect("powerwell", effectdata)
-	
+
 	pl:CustomGesture(ACT_SIGNAL_HALT)
 end
 
@@ -3045,7 +3074,7 @@ function spells.Death(pl)
 		for _, target in pairs(targets) do
 			local health = target:Health()
 
-			target:RemoveAllStatus(false, false, false) 
+			target:RemoveAllStatus(false, false, false)
 			target:TakeSpecialDamage(health, DMGTYPE_GENERIC, pl, DUMMY_DEATH)
 
 			local effectdata = EffectData()
@@ -3056,13 +3085,13 @@ function spells.Death(pl)
 			GAMEMODE:PlayerHeal(pl, pl, health * 2)
 		end
 	else
-		pl:LMR(89) 
+		pl:LMR(89)
 	end
 end
 
 function spells.Voidwalk(pl)
 	if not pl:OnGround() or pl:IsAnchored() or pl:GetStatus("stun") or pl:GetStatus("stun_noeffect") then return true end
-	
+
 	if pl:IsCarrying() then
 		pl:LM(90)
 		return true
@@ -3100,7 +3129,7 @@ end
 
 function spells.Shadowstorm(pl)
 	if not pl:OnGround() then return true end
-	
+
 	local ent = ents.Create("shadowstorm")
 	if ent:IsValid() then
 		ent:SetPos(pl:GetPos())
@@ -3145,7 +3174,7 @@ end
 
 function PlantNetherBomb(pl, uid)
 	if not (pl:IsValid() and pl:Alive()) then return end
-	
+
 	local eyepos = pl:EyePos()
 	local dir = pl:GetAimVector()
 	local tr = util.TraceLine({start = eyepos, endpos = eyepos + dir * 70, filter = pl, mask = MASK_PLAYERSOLID})
@@ -3188,7 +3217,7 @@ function spells.FieryTalon(pl)
 	pl:ResetLuaAnimation("FIERYTALON")
 	for i=1,5 do
 		local aimvec = pl:EyeAngles():Forward() * 1500 - pl:EyeAngles():Right() * (240 - 80 * i)
-		
+
 		local ent = ents.Create("projectile_burn")
 		if ent:IsValid() then
 			ent:SetOwner(pl)

@@ -5,6 +5,9 @@ function MakepOptions()
 		return
 	end
 
+	local cv_A = GetConVar("nox_useactionbar")
+	local UsingActionBar = cv_A:GetBool()
+
 	local Window = vgui.Create("DFrame")
 	local truewide = 800
 	local truetall = 700
@@ -57,6 +60,19 @@ function MakepOptions()
 	check:SetText("Don't go through friendly teleports")
 	check:SetConVar("nox_declinefriendlyteleports")
 
+	local check = vgui.Create("DCheckBoxLabel", Window)
+	check:SetPos(64, 160)
+	check:SetSize(wide, 32)
+	check:SetText("Use Action Bar")
+	check:SetConVar("nox_useactionbar")
+
+	cvars.AddChangeCallback("nox_useactionbar", function(cvar, old, new)
+		net.Start("PlayerUsingActionBar")
+		net.WriteBool(new)
+		net.SendToServer()
+		UsingActionBar = new
+	end)
+
 	local slider = vgui.Create("DNumSlider", Window)
 	slider:SetPos(64, 190)
 	slider:SetSize(320, 48)
@@ -78,13 +94,13 @@ function MakepOptions()
 	check:SetSize(wide, 32)
 	check:SetText("Use large spell icons")
 	check:SetConVar("nox_hud_largespellicons")
-	
+
 	local check = vgui.Create("DCheckBoxLabel", Window)
 	check:SetPos(64, 450)
 	check:SetSize(wide, 32)
 	check:SetText("Use old mana/health display")
 	check:SetConVar("nox_hud_oldstyle")
-	
+
 	local check = vgui.Create("DCheckBoxLabel", Window)
 	check:SetPos(64, 510)
 	check:SetSize(wide, 32)
@@ -171,7 +187,7 @@ function MakepOptions()
 	slider:SetMinMax(0, 0.999)
 	slider:SetConVar("nox_hud_spellmenu_y")
 	slider:SetText("Spell Menu Y-position")
-	
+
 	local slider = vgui.Create("DNumSlider", Window)
 	slider:SetPos(x, 550)
 	slider:SetSize(320, 48)
@@ -179,7 +195,7 @@ function MakepOptions()
 	slider:SetMinMax(0, 0.999)
 	slider:SetConVar("nox_hud_nbar_x")
 	slider:SetText("Multi-Bar X-position")
-	
+
 	local slider = vgui.Create("DNumSlider", Window)
 	slider:SetPos(x, 600)
 	slider:SetSize(320, 48)

@@ -16,6 +16,9 @@ CLASS.Image = "noxctf/classicons/assassin"
 CLASS.RawIcon = "spellicons/venomblade.png"
 
 CLASS.DefaultSpellSheet = "Night Wish:-:Venom Blade:-:Evil Eye:-:Voidwalk:-:Nether Bomb:-:Shadowstorm:-:-:-:-:-"
+
+CLASS.DefaultSpellSheetA = "Night Wish:Venom Blade:Shadowstorm:Nether Bomb:-:-:-:Evil Eye:Voidwalk"
+
 CLASS.PoisonImmune = true
 
 CLASS.EaseOfUse = 6
