@@ -173,7 +173,7 @@ function GM:_Think()
 	end
 	self.PrevHealth = health
 
-	if UsingActionBar and not NekoChat.isTyping and MySelf:Alive() then
+	if UsingActionBar and (not vgui.GetKeyboardFocus()) and MySelf:Alive() then
 		if input.IsKeyDown(KEY_LALT) then
 			if not KeyLocks[KEY_LALT] then
 				KeyLocks[KEY_LALT] = true
